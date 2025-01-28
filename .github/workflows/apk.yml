@@ -26,7 +26,7 @@ jobs:
           # 0 = all history for all branches and tags. (needed for git describe)
           fetch-depth: 0
           fetch-tags: true
-          ref: master
+          ref: android
 
       # Set Current Date As Env Variable
       - name: Set current date as env variable
