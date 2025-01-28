@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "date_today=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
           echo "TAG=$(git describe --tags)" >> $GITHUB_ENV
-          echo TAG=${{ TAG }}
+          echo "TAG=${{ env.TAG }}"
 
       - name: Set Up JDK
         uses: actions/setup-java@v4
