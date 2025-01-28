@@ -34,12 +34,10 @@ jobs:
           fetch-tags: true
           ref: android
 
-      # Set Current Date As Env Variable
-      - name: Set current date as env variable
+      - name: Set env vars
         run: |
-          echo "date_today=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
           echo "TAG=$(git describe --tags)" >> $GITHUB_ENV
-          echo "TAG=${{ env.TAG }}"
+          echo "${TAG}"
 
       - name: Set Up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
@@ -57,19 +55,35 @@ jobs:
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
 
-      # Create APK Debug
       - name: Build apk debug project (APK) - ${{ env.main_project_module }} module
         run: ./gradlew assembleDebug
 
-      # Upload Artifact Build
-      # Noted For Output [main_project_module]/build/outputs/apk/debug/
       - name: Upload APK Debug - ${{ env.repository_name }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event.repository.name }} - APK(s) debug
+          name: ${{ github.event.repository.name }}-APK
           path: ${{ env.main_project_module }}/build/outputs/apk/debug/
 
+      - name: Decrypt Keystore
+        env:
+          SIGNING_KEYSTORE_FILE: ${{ secrets.KEYSTORE }}
+        run: |
+          echo "$SIGNING_KEYSTORE_FILE" | base64 -d > $HOME/release-key.jks
 
+      - name: Build Release APK
+        env:
+          KEYSTORE: $HOME/release-key.jks
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        run: ./gradlew assembleRelease
+        
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: app/build/outputs/apk/release/*.apk
+          
       - name: Create Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/release/')
