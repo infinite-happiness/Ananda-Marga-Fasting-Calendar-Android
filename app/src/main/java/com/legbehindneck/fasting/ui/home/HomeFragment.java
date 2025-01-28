@@ -36,15 +36,17 @@ public class HomeFragment extends Fragment {
                 callback.invoke(origin, true, false);
             }
         });
+
         WebView.setWebContentsDebuggingEnabled(true);
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
+        webSettings.setGeolocationEnabled(true);
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         webSettings.setLoadsImagesAutomatically(true);
         webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
-        webSettings.setGeolocationEnabled(true);
         webView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
 //            webView.setScrollbarFadingEnabled(false);
         webView.setVerticalScrollBarEnabled(true);
@@ -73,6 +75,8 @@ public class HomeFragment extends Fragment {
                 return assetLoader.shouldInterceptRequest(Uri.parse(url));
             }
         });
+
+
 
         webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html");
 
