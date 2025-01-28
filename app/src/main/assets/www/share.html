@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" href="favicon.ico">
+
+    <title>Share</title>
+</head>
+
+<body>
+    <script src="js/layout.js"></script>
+    <script>
+        function clipboardCopy(querySelector) {
+            // https://stackoverflow.com/a/30810322
+            let inputWebsiteUrl = document.querySelector(querySelector);
+
+            inputWebsiteUrl.focus();
+            inputWebsiteUrl.select();
+            try {
+                var successful = document.execCommand('copy');
+                var msg = successful ? 'successful' : 'unsuccessful';
+                //console.log('Copying text was ' + msg);
+            } catch (err) {
+                //console.log('Oops, unable to copy');
+            }
+
+        }
+    </script>
+    <header id="header" style="background:transparent;"></header>
+    <main class="responsive padding" x-data="{iframeWidth:640, iframeHeight:480}">
+        <h1>Share</h1>
+        You can copy this website url here for sharing:
+        <div class="field border suffix fill extra">
+            <input id="inputWebsiteUrl" type="text" onclick="this.select()" :value="site.url" x-ref="inputWebsiteUrl">
+            <i class="front" @click="
+                    if ($refs.inputWebsiteUrl.value == 'Copied!') return;
+                    clipboardCopy('#inputWebsiteUrl');
+                    let ref = $refs.inputWebsiteUrl;
+                    let val = $refs.inputWebsiteUrl.value;
+                    $refs.inputWebsiteUrl.value = 'Copied!';
+                    setTimeout(() => {
+                        $refs.inputWebsiteUrl.value = val;
+                    }, 2000);
+                ">Content_Copy</i>
+        </div>
+        <!--
+        https://github.com/bradvin/social-share-urls
+        https://jonsuh.com/blog/social-share-links/
+        -->
+        Share this calendar on: <br>
+        <a class="button tiny-margin responsive" style="background-color: #25D366;"
+            :href="'https://api.whatsapp.com/send?text=' + site.urlEncodedTitle + '%20' + site.urlEncodedUrl"
+            target="_blank" rel="nofollow noopener">WhatsApp</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #0088cc;"
+            :href="'https://telegram.me/share/url?text=' + site.urlEncodedTitle + '&url=' + site.urlEncodedUrl"
+            target="_blank" rel="nofollow noopener">Telegram</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #006AFF;"
+            :href="'fb-messenger://share/?app_id=1468699796783355&link=' + site.urlEncodedUrl" target="_blank"
+            rel="nofollow noopener">Messenger</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #4267B2;"
+            :href="'https://www.facebook.com/share.php?u=' + site.urlEncodedUrl" target="_blank"
+            rel="nofollow noopener">FaceBook</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #1DA1F2;"
+            :href="'https://twitter.com/intent/tweet?text=' + site.urlEncodedTitle + '+' + site.urlEncodedUrl"
+            target="_blank" rel="nofollow noopener">X (Twitter)</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #0A66C2;"
+            :href="'https://www.linkedin.com/shareArticle?mini=true' + '&url=' + site.urlEncodedUrl + '&title' + site.urlEncodedTitle"
+            target=" _blank" rel="nofollow noopener">LinkedIn</a>
+
+        <a class="button yellow10 tiny-margin responsive"
+            :href="'mailto:?subject=' + site.urlEncodedTitle + '&body=' + site.urlEncodedUrl" target="_blank"
+            rel="nofollow noopener">Email</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #FF5700;"
+            :href="'http://www.reddit.com/submit/?url=' + site.urlEncodedUrl + '&title=' + site.urlEncodedTitle"
+            target="_blank" rel="nofollow noopener">Reddit</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #E60023;"
+            :href="'https://www.pinterest.com/pin/create/button/?url=' + site.urlEncodedUrl + '&media=' + site.urlEncodedImage + '&description=' + site.urlEncodedTitle"
+            target="_blank" rel="nofollow noopener">Pinterest</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #fc4f08;"
+            :href="'https://www.blogger.com/blog-this.g?u=' + site.urlEncodedUrl + '&n=' + site.urlEncodedTitle"
+            target="_blank" rel="nofollow noopener">Blogger</a>
+
+        <a class="button tiny-margin responsive" style="background-color: #34526f;"
+            :href="'https://www.tumblr.com/widgets/share/tool?canonicalUrl=' + site.urlEncodedUrl + '&title=' + site.urlEncodedTitle + '&tags=' + site.urlEncodedTags + '&caption=' + site.urlEncodedTitle"
+            target="_blank" rel="nofollow noopener">Tumblr</a>
+
+        <h2>Download</h2>
+        You can download this calendar onto your computer and access it without an internet connection:
+        <br>
+        <ul class="margin">
+            <li>
+                <a class="yellow10-text" :href="site.downloadUrl" rel="nofollow noopener">Download the .zip-file</a>
+            </li>
+            <li>Make sure to unzip (extract the files from) the .zip-file into a folder on your computer</li>
+            <li>Open the folder on your computer and then (double click to) open index.html with your web browser</li>
+        </ul>
+
+
+
+        <h2>Embed</h2>
+        You can embed the calendar on your website by adding this html code:
+        <div class="field textarea border suffix fill">
+            <textarea onclick="this.select()" id="textareaWebsiteEmbed"
+                x-text='`<iframe src="` + site.url + `" width="` +iframeWidth+ `" height="` +iframeHeight+ `"></iframe>`'></textarea>
+            <i class="front" onclick="clipboardCopy('#textareaWebsiteEmbed')">Content_Copy</i>
+        </div>
+
+        Adjust the size of the embedding here:
+        <div class="field middle-align">
+            <label class="slider">
+                <input type="range" value="640" min="200" max="1500" x-model="iframeWidth">
+                <span></span>
+            </label>
+            <span class="helper">Width</span>
+        </div>
+
+        <div class="field middle-align">
+            <label class="slider green-text">
+                <input type="range" value="640" min="200" max="1500" x-model="iframeHeight">
+                <span></span>
+            </label>
+            <span class="helper">Height</span>
+        </div>
+
+        This is what embedding looks like:<br>
+        <iframe :src="site.url" :width="iframeWidth" :height="iframeHeight"></iframe>
+        <div id="bottom_content"></div>
+    </main>
+</body>
+
+</html>

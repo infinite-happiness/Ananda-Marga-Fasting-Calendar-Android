@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Ananda Marga Scientific Fasting Calendar</title>
+	<meta property="og:title" content="Ananda Marga Scientific Fasting Calendar" />
+	<meta property="og:description" content="Automatically calculate fasting days for any location and time zone!" />
+	<meta property="og:image"
+		content="https://infinite-happiness.github.io/Ananda-Marga-Fasting-Calendar/media/Moon-Paths-Ekadashii-Amavasya-Purnima.min.png" />
+	<meta property="og:url" content="https://infinite-happiness.github.io/Ananda-Marga-Fasting-Calendar/" />
+	<meta property="og:type" content="website" />
+
+
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<link rel="canonical" href="https://infinite-happiness.github.io/Ananda-Marga-Fasting-Calendar/" />
+
+	<script src="js/luxon.min.js"></script>
+	<script src="js/astronomy.browser.min.js"></script>
+	<link rel="icon" href="favicon.ico">
+	<!-- requires web server<script type="module" src="js/beer.min.js"></script>
+	<script type="module" src="js/material-dynamic-colors.min.js"></script>-->
+
+</head>
+
+<body style="visibility:hidden;">
+	<script src="js/layout.js"></script>
+	<script src="js/calc-advanced.js"></script>
+	<script src="js/tithi.js?v1"></script>
+	<!--<script src="data/World_Cities_Location_table.js"></script>-->
+	<script src="data/AM_Fasting_Days_2024.js"></script>
+
+	<script>
+		// https://github.com/RWDevelopment/alpine_js_searchable_input?tab=readme-ov-file
+		// https://www.alpinetoolbox.com/
+		// https://codepen.io/ScottWindon/pen/oNbOzQj
+		let DateTime = luxon.DateTime;
+		let Interval = luxon.Interval;
+
+		// https://stackoverflow.com/a/2856602
+		function fireEvent(element, context = "") {
+			if (context != "") console.log("fireEvent started:", context)
+			// set element to startDateInput to re-calculate tithis
+			if ("createEvent" in document) {
+				var evt = document.createEvent("HTMLEvents"); evt.initEvent("change", false, true);
+				element.dispatchEvent(evt);
+			} else element.fireEvent("onchange");
+			if (context != "") console.log("fireEvent ended:", context)
+		}
+
+		function calculator() {
+			let dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+			let dateTimeOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+			// https://stackoverflow.com/a/61196133
+			let localeList = ['en-US', 'en-UK', 'en-IN'];
+			let userLanguage = navigator.userLanguage || (navigator.languages && navigator.languages.length && navigator.languages[0]) || navigator.language || navigator.browserLanguage || navigator.systemLanguage;
+			if (userLanguage && !localeList.includes(userLanguage)) localeList.push(userLanguage);
+			let timeZoneList = Intl.supportedValuesOf('timeZone');
+			timeZoneList.push('UTC');
+			let varanasiTimeZone = timeZoneList.includes("Asia/Kolkata") ? "Asia/Kolkata" : "Asia/Calcutta";
+			// default to varanasi - https://en.wikipedia.org/wiki/Varanasi
+			let varanasiCoords = { latitude: 25.318889, longitude: 83.012778, elevation: 80.71, aboveGround: 1 },
+				dayStartList = ["Sun at Center of Horizon 0°", "Top of the Sun Peeks above Horizon", "Civil Dawn 6°", "Nautical Dawn 12°", "Astronomical Dawn 18°"];
+			//console.log("Selected default time zone:", varanasiTimeZone, dayStartList);
+			if (localStorage.getItem('calendar') === null) localStorage.setItem('calendar', '{}');
+			let storageObject;
+			try {
+				storageObject = JSON.parse(localStorage.getItem('calendar'));
+			} catch (error) {
+				console.log("storageObject error:", error);
+				localStorage.setItem('calendar', '{}');
+				storageObject = JSON.parse(localStorage.getItem('calendar'));
+			}
+			//console.log("localStorage:", localStorage.getItem('calendar'), storageObject);
+
+			return {
+				rows: [],
+				matches: 1, // prevent divide by 0 by not setting to 0
+				errors: 0,
+				startingDate: 0,
+				endingDate: 0,
+				fastingEventDuration: storageObject.fastingEventDuration === undefined ? 60 : storageObject.fastingEventDuration,
+				fastingEventStartTime: storageObject.fastingEventStartTime === undefined ? '09:00' : storageObject.fastingEventStartTime,
+				localeList: localeList,
+				selectedLocale: storageObject.selectedLocale || 'en-UK',
+				timeZoneList: timeZoneList,
+				varanasiTimeZone: varanasiTimeZone,
+				selectedTimeZone: storageObject.selectedTimeZone === undefined || !timeZoneList.includes(storageObject.selectedTimeZone) ? varanasiTimeZone : storageObject.selectedTimeZone,
+				dayStartList: dayStartList,
+				selectedDayStart: storageObject.selectedDayStart === undefined || !dayStartList.includes(storageObject.selectedDayStart) ? dayStartList[2] : storageObject.selectedDayStart,
+				advancedDlgIsOpen: false,
+				advancedDlgIsOpenedAt: 0, // https://stackoverflow.com/questions/71025866/alpinejs-triggering-a-click-outside-event-when-adding-modal
+				saveSettingsInBrowser: storageObject.saveSettingsInBrowser || false,
+				showTithiDetails: storageObject.showTithiDetails || false,
+				fastingDayAsAllDayEvent: storageObject.fastingDayAsAllDayEvent === false ? false : true,
+				showGoogleCalendar: storageObject.showGoogleCalendar === false ? false : true,
+				showOutlookCalendar: storageObject.showOutlookCalendar || false,
+				showOffice365Calendar: storageObject.showOffice365Calendar || false,
+				showAndroidCalendar: storageObject.showAndroidCalendar || false,
+				showiOSCalendar: storageObject.showiOSCalendar || false,
+				//worldCities: World_Cities, // slow, only load if needed
+				gettingLocation: false,
+				myCurrentLocationAllowed: true,
+				myCurrentLocationSelected: false,
+				varanasiCoords: varanasiCoords,
+				latitude: storageObject.latitude === undefined ? varanasiCoords.latitude : storageObject.latitude, // numbers can be 0, so can't just do storageObject.latitude || 25.321684
+				longitude: storageObject.longitude === undefined ? varanasiCoords.longitude : storageObject.longitude,
+				elevation: storageObject.elevation === undefined ? varanasiCoords.elevation : storageObject.elevation,
+				aboveGround: storageObject.aboveGround === undefined ? varanasiCoords.aboveGround : storageObject.aboveGround,
+				testData: AM_Fasting_Days_2024,
+				showTestDataAccuracy: false,
+				update(startDate, endDate) {
+					// this function is called when the start or end date are changed, and such a change event is fired from javascript when the calculations need to be updated in the advanced calendar
+					//console.log("update:", this.selectedLocale, this.selectedTimeZone, this.selectedDayStart, this.dayStartList, startDate, endDate, parseFloat(this.latitude), parseFloat(this.longitude), parseFloat(this.elevation), parseFloat(this.aboveGround), this.testData);
+					result = tithi.calculateTithis(this.selectedLocale, this.selectedTimeZone, this.selectedDayStart, this.dayStartList, startDate, endDate, parseFloat(this.latitude), parseFloat(this.longitude), parseFloat(this.elevation), parseFloat(this.aboveGround), this.testData);
+					this.rows = result.rows;
+					this.matches = result.matches;
+					this.errors = result.errors;
+
+					this.startingDate = DateTime.fromISO(startDate).setLocale(this.selectedLocale);
+					this.endingDate = DateTime.fromISO(endDate).setLocale(this.selectedLocale);
+
+					let storageObject = {};
+					localStorage.removeItem('calendar');
+					if (this.saveSettingsInBrowser) {
+						storageObject.saveSettingsInBrowser = this.saveSettingsInBrowser;
+						storageObject.fastingEventDuration = this.fastingEventDuration;
+						storageObject.fastingEventStartTime = this.fastingEventStartTime;
+						storageObject.showTithiDetails = this.showTithiDetails;
+						storageObject.fastingDayAsAllDayEvent = this.fastingDayAsAllDayEvent;
+						storageObject.showGoogleCalendar = this.showGoogleCalendar;
+						storageObject.showOutlookCalendar = this.showOutlookCalendar;
+						storageObject.showOffice365Calendar = this.showOffice365Calendar;
+						storageObject.showAndroidCalendar = this.showAndroidCalendar;
+						storageObject.showiOSCalendar = this.showiOSCalendar;
+						storageObject.selectedLocale = this.selectedLocale;
+						storageObject.selectedTimeZone = this.selectedTimeZone;
+						storageObject.selectedDayStart = this.selectedDayStart;
+						storageObject.latitude = this.latitude;
+						storageObject.longitude = this.longitude;
+						storageObject.elevation = this.elevation;
+						storageObject.aboveGround = this.aboveGround;
+					};
+					localStorage.setItem('calendar', JSON.stringify(storageObject));
+					//console.log(window.localStorage.calendar);
+				},
+
+				optionsToggle() {
+					this.advancedDlgIsOpen = !this.advancedDlgIsOpen;
+					this.advancedDlgIsOpenedAt = Date.now();
+					const navbar = document.getElementById('navbar_main');
+					if (navbar !== null) {
+						const calendar_options = document.getElementById('calendar_options');
+						//document.body.style.marginTop = `${navbarHeight}px`; // done by beercss (js?)
+						calendar_options.style.marginTop = `${navbar.offsetHeight - 15}px`;
+						calendar_options.style.paddingBottom = `${navbar.offsetHeight + 10}px`;
+					}
+
+				},
+
+				getMobileOperatingSystem() {
+					var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+					// Windows Phone must come first because its UA also contains "Android"
+					if (/windows phone/i.test(userAgent)) {
+						return "Windows Phone";
+					}
+
+					if (/android/i.test(userAgent)) {
+						return "Android";
+					}
+
+					// iOS detection from: http://stackoverflow.com/a/9039885/177710
+					if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+						return "iOS";
+					}
+
+					return "unknown";
+				},
+				nowLuxon() { return DateTime.now().setZone(this.selectedTimeZone) },
+				formatDate(date) { return date; },
+				formatDateTime(date) { return date.toLocaleDateString("en-US", dateTimeOptions) },
+				formatTimeDiff(timeDiff) {
+					d = new Date(timeDiff).toISOString().slice(11, 19)   // HH:MM:SS
+					d = d.replace(':', 'h ');
+					d = d.replace(':', 'm ');
+					d += 's';
+					return d;
+				},
+
+				iOSCalendarUrl(tithi, fastingDTTZ) {
+					// https://medium.com/@duhseekoh/need-to-open-the-os-calendar-at-a-specific-date-in-react-native-55f3a085cf8e
+					let referenceDate = DateTime.utc(2001, 1, 1);
+					let elapsed = fastingDTTZ.toMillis() / 1000 - referenceDate.toMillis() / 1000;
+					let url = 'calshow:' + elapsed;
+					return url;
+				},
+				androidCalendarUrl(tithi, fastingDTTZ) {
+					// https://medium.com/@duhseekoh/need-to-open-the-os-calendar-at-a-specific-date-in-react-native-55f3a085cf8e
+					let url = 'content://com.android.calendar/time/' + fastingDTTZ.toMillis();
+					return url;
+				},
+				googleCalendarUrl(tithi, fastingDTTZ) {
+					// https://github.com/InteractionDesignFoundation/add-event-to-calendar-docs/blob/main/services/google.md
+					// this is not working on google calendar apps on samsung/huawei, but it does work on ios
+					let url = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(tithi.name);
+					let start, end;
+
+					if (this.fastingDayAsAllDayEvent) {
+						let d = new Date(fastingDTTZ.toISODate());
+						start = d.toISOString().substring(0, 10).replaceAll("-", "");
+						d.setHours(d.getHours() + 24);
+						end = d.toISOString().substring(0, 10).replaceAll("-", "");
+					}
+					else {
+						// url working on google calendar apps on samsung/huawei:
+						//url = "https://calendar.google.com/calendar/event?action=TEMPLATE&pprop=eid..&dates=20241023T130000%2F20241023T140000&text=...&location=...&ctok=...&details=..."
+
+						const { minute, hour } = DateTime.fromFormat(this.fastingEventStartTime, 'hh:mm').toObject();
+						//console.log(minute, hour);
+						// this uses the time zone of the calculator, whereas for the notification the user probably wants their own local time
+						// at least if they want to use default varanasi fasting date for the fasting day, and local time for the notification
+						const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+						//start = fastingDTTZ.setZone(localTimeZone).set({ hour: hour, minute: minute, });
+						//end = start.plus({ minutes: this.fastingEventDuration });
+						start = new Date(fastingDTTZ.toISODate());
+						start.setHours(hour, minute);
+						end = new Date(DateTime.fromJSDate(start).plus({ minutes: this.fastingEventDuration }).toJSDate());
+
+						start = start.toISOString().replaceAll("-", "").replaceAll(":", "");
+						end = end.toISOString().replaceAll("-", "").replaceAll(":", "");
+					}
+					url += "&dates=" + start + "/" + end;
+					return url;
+				},
+				msOutlookCalendarUrl(tithi, fastingDTTZ) {
+					// https://github.com/InteractionDesignFoundation/add-event-to-calendar-docs/blob/main/services/outlook-web.md
+					let url = "https://outlook.live.com/calendar/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=" + encodeURIComponent(tithi.name);
+					let start, end;
+
+					if (this.fastingDayAsAllDayEvent) {
+						let d = new Date(fastingDTTZ.toISODate());
+						start = d.toISOString().substring(0, 10)//.replaceAll("-", "");
+						d.setHours(d.getHours() + 24);
+						end = d.toISOString().substring(0, 10)//.replaceAll("-", "");
+						url += "&allday=true"
+					}
+					else {
+						const { minute, hour } = DateTime.fromFormat(this.fastingEventStartTime, 'hh:mm').toObject();
+						start = new Date(fastingDTTZ.toISODate());
+						start.setHours(hour, minute);
+						end = new Date(DateTime.fromJSDate(start).plus({ minutes: this.fastingEventDuration }).toJSDate());
+
+						//start = start.toISOString(); // ms does not set this to local time zone
+						//end = end.toISOString();// ms does not set this to local time zone
+						start = DateTime.fromJSDate(start).toISO();
+						end = DateTime.fromJSDate(end).toISO();
+						//console.log("msOutlookCalendarUrl", start, end);
+						url += "&allday=false"
+					}
+					url += "&startdt=" + encodeURIComponent(start) + "&enddt=" + encodeURIComponent(end);
+					return url;
+				},
+				msOffice365CalendarUrl(tithi, fastingDTTZ) {
+					//let url = "https://outlook.office.com/calendar/deeplink/compose?path=/calendar/action/compose&rru=addevent&allday=true&subject=" + encodeURIComponent(tithi.name);
+					let url = this.msOutlookCalendarUrl(tithi, fastingDTTZ).replace('https://outlook.live.com/', 'https://outlook.office.com/');
+					return url;
+				},
+
+				myCurrentTimezoneSelected() {
+					return this.selectedTimeZone == Intl.DateTimeFormat().resolvedOptions().timeZone;
+				},
+
+				getMyTimeZone() {
+					this.selectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+				},
+
+				getMyLocation(getMyTimeZoneIfSucceed = false) {
+					let context = this;
+					this.gettingLocation = true;
+					if (navigator.geolocation) {
+						setTimeout(function () {
+							navigator.geolocation.getCurrentPosition(
+								// show position
+								(position) => {
+									console.log("Got my position:", position);
+									context.latitude = position.coords.latitude;
+									context.longitude = position.coords.longitude;
+									context.elevation = position.coords.altitude || 0;
+									context.myCurrentLocationSelected = true;
+									context.gettingLocation = false;
+									if (getMyTimeZoneIfSucceed) context.getMyTimeZone();
+									fireEvent(startDateInput); // note that this fires async, ie after position has been acquired
+								},
+								// error
+								(error) => {
+									console.log(error);
+									context.gettingLocation = false;
+									context.myCurrentLocationAllowed = false;
+									fireEvent(startDateInput); // note that this fires async, ie after position has failed
+								}
+							);
+
+						}, 0)
+					}
+				},
+
+				/*
+				// not working in serverless mode
+				async getTestData() {
+					const response = await fetch("data/AM_Fasting_Days_2024.json");
+					const json = await response.json();
+					console.log(json);
+				},
+				*/
+			}
+		}
+	</script>
+
+	<main class="responsive">
+		<div id="calculator" x-data="calculator()">
+			<h1 :style="{marginTop:isInIframe()?'':'100px', fontSize:isInIframe()?'1.1rem':'1.7rem'}">
+				<i class="margin"><img src="media/android-chrome-192x192.png"></i>
+				Ananda Marga Scientific Fasting Calendar
+			</h1>
+			<a x-show="isInIframe()" class="yellow10-text" :href="site.url" target="_blank">
+				<i class="margin">Open_In_New</i>Open Full Calendar</a>
+
+			<article class="border margin yellow2">
+				<div>Selected Time Zone: <span x-text="selectedTimeZone"></span></div>
+				<template
+					x-if="latitude == varanasiCoords.latitude && longitude == varanasiCoords.longitude && elevation == varanasiCoords.elevation">
+					<div>
+						<div class="small-divider"></div>
+						<div>Selected Location: Varanasi</div>
+					</div>
+				</template>
+				<template x-if="myCurrentLocationSelected">
+					<div>
+						<div class="small-divider"></div>
+						<div>Selected Location: My Current Location</div>
+					</div>
+				</template>
+
+				<template x-if="!myCurrentLocationAllowed && isInIframe()">
+					<a :href="site.url" target="_blank" class="button error responsive small-margin">
+						Failed! Open Full...
+					</a>
+				</template>
+				<template x-if="!myCurrentLocationAllowed && !isInIframe()">
+					<a :href="site.url" target="_blank" class="button error responsive small-margin">
+						Failed! Please Allow Location in Browser
+					</a>
+				</template>
+				<template
+					x-if="myCurrentLocationAllowed && (!myCurrentLocationSelected || !myCurrentTimezoneSelected())">
+					<button @click="getMyLocation(true);" class="yellow10 responsive small-margin">
+						Use My Location and Time Zone
+						<template x-if="gettingLocation">
+							<progress class="yellow10 circle small" style="color:white;"></progress>
+						</template>
+						<template x-if="!gettingLocation">
+							<i>Location_On</i>
+						</template>
+					</button>
+				</template>
+
+				<!--
+				<button @click="optionsToggle();" class="yellow10 responsive">
+					More Options
+					<i>settings</i>
+				</button>
+				-->
+			</article>
+
+			<div id="calculator_advanced" style="padding:0;"></div>
+
+			<h3 class="capitalize" style="margin:25px 0 10px 0;"
+				x-text="'Fasting Dates ' + startingDate.monthLong + ' ' + startingDate.year + ' - ' + endingDate.monthLong + ' ' + endingDate.year">
+			</h3>
+			<table class="stripes yellow2" style="border-collapse: collapse;">
+				<tbody>
+					<template x-for="row in rows">
+						<tr :style="{opacity: row.fastingDTTZ.endOf('day') < nowLuxon() ? '0.6':'1', fontWeight: row.fastingDTTZ.startOf('day') < nowLuxon() && nowLuxon() < row.fastingDTTZ.endOf('day') ? 'bold':''}"
+							:class="'month-' + row.fastingDTTZ.month">
+							<td x-text="row.tithi.name">
+							</td>
+							<td>
+								<span x-text="row.fastingDTTZ.toLocaleString(DateTime.DATE_HUGE)"></span><br>
+							</td>
+							<td style="text-align: right; padding-right:1rem;">
+								<a x-show="showGoogleCalendar" :href="googleCalendarUrl(row.tithi, row.fastingDTTZ)"
+									target="_blank" rel="nofollow noopener" title="Add To Google Calendar">
+									<i class="tiny-margin"><img src="media/external/google-calendar-icon.webp"></i>
+								</a>
+								<a x-show="showOutlookCalendar" :href="msOutlookCalendarUrl(row.tithi, row.fastingDTTZ)"
+									target="_blank" rel="nofollow noopener" title="Add To Microsoft Outlook">
+									<i class="tiny-margin"><img src="media/external/ms-outlook-icon.webp"></i>
+								</a>
+								<a x-show="showOffice365Calendar"
+									:href="msOffice365CalendarUrl(row.tithi, row.fastingDTTZ)" target="_blank"
+									rel="nofollow noopener" title="Add To Microsoft 365 Office">
+									<i class="tiny-margin""><img src=" media/external/ms-office-365-icon.webp"></i>
+								</a>
+								<a x-show="showAndroidCalendar" :href="androidCalendarUrl(row.tithi, row.fastingDTTZ)"
+									target="_blank" rel="nofollow noopener" title="Add To Android Calendar">
+									<i class="tiny-margin""><img src=" media/external/Android_robot.svg.png"></i>
+								</a>
+								<a x-show="showiOSCalendar" :href="iOSCalendarUrl(row.tithi, row.fastingDTTZ)"
+									target="_blank" rel="nofollow noopener" title="Add To iOS Calendar">
+									<i class="tiny-margin""><img src=" media/external/iOS-Logo-2017-500x333.jpg"></i>
+								</a>
+							</td>
+							<template x-if="showTithiDetails">
+								<td>
+									<table class="stripes yellow2">
+										<tr>
+											<td
+												x-text="row.tithi.name + ' starts: ' + row.start.toLocaleString(DateTime.DATETIME_HUGE)">
+											</td>
+										</tr>
+										<tr>
+											<td
+												x-text="'Then: ' + Interval.fromDateTimes(row.start, row.sunrise).toDuration(['hours', 'minutes', 'seconds']).toFormat('h\'h\' m\'m\' s\'s\'') + ' until...'">
+											</td>
+										</tr>
+										<tr>
+											<td
+												x-text="'Sunrise: ' + row.sunrise.toLocaleString(DateTime.DATETIME_HUGE)">
+											</td>
+										</tr>
+										<tr>
+											<td x-text="'Sunrise type: ' + row.sunriseType">
+											</td>
+										</tr>
+										<tr>
+											<td
+												x-text="'Then: ' + Interval.fromDateTimes(row.sunrise, row.end).toDuration(['hours', 'minutes', 'seconds']).toFormat('h\'h\' m\'m\' s\'s\'') + ' until...'">
+											</td>
+										</tr>
+										<tr>
+											<td
+												x-text="row.tithi.name + ' ends: ' + row.end.toLocaleString(DateTime.DATETIME_HUGE)">
+											</td>
+										</tr>
+										<tr x-show="showTestDataAccuracy">
+											<td x-text="'Official fasting date: ' + row.testDataValue"
+												:class="row.matchesTestData ? '':'error-container'"></td>
+										</tr>
+									</table>
+								</td>
+							</template>
+							<!--
+							<td x-text="formatDateTime(row.end.date)"></td>
+							<td x-text="formatDateTime(row.sunrise.date)"></td>-->
+						</tr>
+					</template>
+				</tbody>
+			</table>
+
+			<div class="field label border">
+				<label for="start_date" class="active">Start Date</label>
+				<input type="date" id="start_date" class="active"
+					@change="update($refs.start_date.value, $refs.end_date.value)"
+					x-init="update($refs.start_date.value, $refs.end_date.value)" x-ref="start_date" />
+			</div>
+
+			<div class="field label border">
+				<label for="end_date" class="active">End Date</label>
+				<input type="date" id="end_date" class="active"
+					@change="update($refs.start_date.value, $refs.end_date.value)" x-ref="end_date" />
+			</div>
+			<!--<small style="display:block; width:250px;">Please note! If you select a long time span this page may be
+							unresponsive for
+							some time!</small>-->
+			<script>
+				/*
+				The date inputs in the gui should be understood as representing the selected time zone.
+				However, DateTimes and time zones are handled elsewhere, as date type inputs use date strings as values.
+				Below, make sure endDateInput is always a dater later than startDateInput.
+				*/
+				const startDateInput = document.getElementById('start_date');
+				const endDateInput = document.getElementById('end_date');
+				startDateInput.value = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString().substring(0, 10);
+				endDateInput.value = new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString().substring(0, 10);
+
+				// ensure end date is always after start date
+				const handleDateRangeChange = () => {
+					const maxDate = new Date(endDateInput.value);
+					const minDate = new Date(startDateInput.value);
+					maxDate.setHours(maxDate.getHours() - 24);
+					startDateInput.max = maxDate.toISOString().substring(0, 10);
+					minDate.setHours(minDate.getHours() + 24);
+					endDateInput.min = minDate.toISOString().substring(0, 10);
+				};
+				handleDateRangeChange();
+				startDateInput.addEventListener('change', handleDateRangeChange);
+				endDateInput.addEventListener('change', handleDateRangeChange);
+			</script>
+
+			<h1 style="margin-top:100px;">Ánanda Márga Fasting Calendar</h1>
+			<p>This is an upavasa fasting chart for Ánanda Márga upavása with ekádashii, and amávasyá (new moon)
+				and púrńimá (full moon) dates.</p>
+
+			<h2>Features</h2>
+			<ul class="padding">
+				<li>Look up any upavasa fasting days, any year, from any location using any time zone and locale (date
+					format).
+				</li>
+				<li>Add fasting dates to your calendar (Google Calendar, Outlook Calendar, Office 365 Calendar, Android
+					Calendar and iOS Calendar).</li>
+				<li>Choose your desired definition of sunrise (astronomical dawn, nautical dawn, civil dawn, top of sun
+					peeks above horizon or sun at center of horizon). You can also use this feature if you are very far
+					north, or very far south, adjusting the sunrise to happen closer to the actual morning. For example,
+					in the winter of the far north, certain types of sunrise never occur. In that case the calculator is
+					using the sun's lowest position as the sunrise, which will be near midnight. Another definition of
+					sunrise may still occur. So you can adjust the calendar settings of Day Start, and turn on Show
+					Tithi Details, and see which start of the day to use. This may make the breaking of fast occur at a
+					practically possible time after sunrise in some cases.</li>
+				<li>Automatically updated - this calendar doesn't depend on someone else hosting a website, or updating
+					the calendar </li>
+				<li>There is no need to use another website or API for the astronomical calculations</li>
+				<li>Embeddable - you can put this calendar on your website (see <a class="yellow10-text"
+						href="share.html">Share</a>)</li>
+				<li>Downloadable - you can download this calendar - so that you can use it without an internet
+					connection or if github will no longer be free and this website might disappear (see <a
+						class="yellow10-text" href="share.html">Share</a>)</li>
+				<li>Free hosting - this calendar is free as long as GitHub is free</li>
+				<li>Far sighted - all information is attempted to be saved in this project, if any of the linked
+					websites will go down in the future</li>
+				<li>Using scientific astronomical calculation libraries</li>
+				<li>One source of complete truth - since there are many fasting dates around, the full source of truth
+					here is fully transparent and defined.</li>
+				<li>Collaborative and interpersonal project. Anyone can continue, change or reimplement this project by
+					using the git code. Now or far into the future. (This does not suggest a free licence).</li>
+			</ul>
+
+			<h4>Synonyms and Keywords (for SEO)</h4>
+			<ul>
+				<li>Anand Marg Upavasa Chart (List)</li>
+				<li>Ánanda Márga Pracáraka Saḿgha Ekadashi Schedule (Table)</li>
+				<li>AM Purnima Almanac (Program)</li>
+				<li>Ananda Marga Pracaraka Samgha Diary (Calculator)</li>
+			</ul>
+
+			<div id="bottom_content"></div>
+			<header id="header" style="background:transparent;"></header>
+		</div>
+	</main>
+</body>
+
+</html>
