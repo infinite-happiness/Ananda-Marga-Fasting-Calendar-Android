@@ -10,10 +10,23 @@ android {
         applicationId "com.legbehindneck.fasting"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "0.1"
+        versionCode 26
+        versionName "26.1"
         setProperty("archivesBaseName", "ananda-marga-fasting-" + versionName)
-//        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    if (System.getenv("KEYSTORE") != null) {
+        signingConfigs {
+            release {
+                storeFile file(System.getenv("KEYSTORE"))
+                storePassword System.getenv("STORE_PASSWORD")
+                keyPassword System.getenv("KEY_PASSWORD")
+                if (keyPassword == null) {
+                    keyPassword = storePassword
+                }
+                keyAlias System.getenv("KEY_ALIAS")
+            }
+        }
     }
 
     buildTypes {
@@ -21,6 +34,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -36,8 +50,8 @@ dependencies {
     implementation libs.appcompat
     implementation libs.material
     implementation libs.constraintlayout
-    implementation libs.lifecycle.livedata.ktx
-    implementation libs.lifecycle.viewmodel.ktx
+//    implementation libs.lifecycle.livedata.ktx
+//    implementation libs.lifecycle.viewmodel.ktx
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
     implementation libs.webkit
