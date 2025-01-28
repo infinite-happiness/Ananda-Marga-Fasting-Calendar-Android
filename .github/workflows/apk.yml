@@ -4,7 +4,11 @@ name: Build APK
 
 env:
   main_project_module: app
-
+  GRADLE_VERSION: 8.5
+  ANDROID_COMPILE_SDK: 34
+  ANDROID_BUILD_TOOLS: "34.0.0"
+  JAVA_VERSION: 17
+  
 on:
 
 # push:
@@ -16,6 +20,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required for creating releases
 
     steps:
       - name: Check-out repository
@@ -35,15 +41,18 @@ jobs:
           echo "TAG=$(git describe --tags)" >> $GITHUB_ENV
           echo "TAG=${{ env.TAG }}"
 
-      - name: Set Up JDK
+      - name: Set Up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: ${{ env.JAVA_VERSION }}
           cache: 'gradle'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+          arguments: -Dorg.gradle.parallel=true -Dorg.gradle.daemon=false
         
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
@@ -59,3 +68,14 @@ jobs:
         with:
           name: ${{ github.event.repository.name }} - APK(s) debug
           path: ${{ env.main_project_module }}/build/outputs/apk/debug/
+
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/release/')
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: MyApp-${{ github.ref_name }}.apk
+          generate_release_notes: false
+          make_latest: true
+          
