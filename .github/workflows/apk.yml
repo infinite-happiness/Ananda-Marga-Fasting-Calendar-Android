@@ -42,6 +42,9 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
 
