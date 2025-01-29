@@ -33,6 +33,10 @@ jobs:
           fetch-tags: true
           ref: android
 
+      - name: Update git submodules
+        run: |
+          git submodule update --init --recursive --remote
+
       - name: Set env vars
         run: |
           echo "TAG=$(git describe --tags --abbrev=1 || echo ${{ github.event.repository.name }})" >> $GITHUB_ENV
@@ -92,9 +96,9 @@ jobs:
           
       - name: Create Release
         uses: softprops/action-gh-release@v2
-#        if: startsWith(github.ref, 'refs/release/')
+#        if: startsWith(github.ref, 'refs/heads/android/')
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.TAG }}
           files: ${{ env.APK_PATH_RELEASE }}
           generate_release_notes: false
           make_latest: true
