@@ -10,9 +10,9 @@ android {
         applicationId "com.legbehindneck.fasting"
         minSdk 24
         targetSdk 34
-        versionCode 27
-        versionName "27.9"
-        setProperty("archivesBaseName", "ananda-marga-fasting-" + versionName)
+        versionCode 29
+        versionName "29.8"
+        setProperty("archivesBaseName", "ananda-marga-fasting")
     }
 
     if (System.getenv("KEYSTORE") != null) {
@@ -52,8 +52,6 @@ dependencies {
     implementation libs.appcompat
     implementation libs.material
     implementation libs.constraintlayout
-//    implementation libs.lifecycle.livedata.ktx
-//    implementation libs.lifecycle.viewmodel.ktx
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
     implementation libs.webkit
