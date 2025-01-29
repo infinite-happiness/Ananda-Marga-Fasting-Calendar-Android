@@ -35,7 +35,7 @@ jobs:
 
       - name: Set env vars
         run: |
-          echo "TAG=${TAG:-$(git describe --tags --abbrev=1 || echo ${{ github.event.repository.name }})}" >> $GITHUB_ENV
+          echo "TAG=$(git describe --tags --abbrev=1 || echo ${{ github.event.repository.name }})" >> $GITHUB_ENV
 
       - name: Set Up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
