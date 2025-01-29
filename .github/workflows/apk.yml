@@ -64,19 +64,29 @@ jobs:
           name: ${{ github.event.repository.name }}-debug.apk
           path: ${{ env.main_project_module }}/build/outputs/apk/debug/
 
-      - name: Decode Keystore
-        run: |
-          if [[ -z "${{ secrets.KEYSTORE_BASE64 }}" ]]; then
-            echo "ERROR: KEYSTORE_BASE64 is UNDEFINED!" >&2
-            exit 1
-          fi
+      - name: Get JKS Keystore
+        id: decode_keystore
+        uses: timheuer/base64-to-file@v1.2
+        with:
+          fileName: 'keystore.jks'
+          encodedString: ${{ secrets.KEYSTORE_BASE64 }}
+          
+      - name: print JKS keystore path
+        run: echo "KEYSTORE PATH=${{ steps.decode_keystore.outputs.filePath}}"
+          
+      # - name: Decode Keystore
+      #   run: |
+      #     if [[ -z "$KEYSTORE_BASE64" ]]; then
+      #       echo "ERROR: KEYSTORE_BASE64 is UNDEFINED!" >&2
+      #       exit 1
+      #     fi
 
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/keystore.jks"
-          ls -alh "$RUNNER_TEMP/keystore.jks"
+      #     echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/keystore.jks"
+      #     ls -alh "$RUNNER_TEMP/keystore.jks"
 
       - name: Build Release APK
         env:
-          KEYSTORE: $RUNNER_TEMP/keystore.jks
+          KEYSTORE: ${{ steps.decode_keystore.outputs.filePath}}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
