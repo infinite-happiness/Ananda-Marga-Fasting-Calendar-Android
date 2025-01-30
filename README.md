@@ -17,7 +17,11 @@ Head to [releases](https://github.com/glowinthedark/Ananda-Marga-Fasting-Calenda
   - macos: `export JAVA_HOME=$(/usr/libexec/java_home -v 17)` to see available values use `/usr/libexec/java_home -V`
   - linux: `sudo update-alternatives --config java` or explicitly via `export JAVA_HOME=/replace/with/correct/path/to/jdk17`)
 
-Once the requirements are satisfied:
+Once the requirements are satisfied, verify the correct java JDK version is configured (must be `17` or higher):
+
+```bash
+javac --version
+``` 
 
 1. Clone the current repository:
 
