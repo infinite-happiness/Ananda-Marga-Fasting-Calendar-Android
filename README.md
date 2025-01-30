@@ -12,8 +12,10 @@ Head to [releases](https://github.com/glowinthedark/Ananda-Marga-Fasting-Calenda
 
 - Java JDK 17 or later, for example, [Eclipse Temurin Java 17 JDK](https://adoptium.net/temurin/releases/)
 - [Android Studio](https://developer.android.com/studio)
-- `JAVA_HOME` must be configured to point to JDK 17 ([steps for windows](https://confluence.atlassian.com/doc/setting-the-java_home-variable-in-windows-8895.html), macos: `export JAVA_HOME=$(/usr/libexec/java_home -v 17)` to see available values 
- use `/usr/libexec/java_home -V`, linux: `sudo update-alternatives --config java` or explicitly via `export JAVA_HOME=/replace/with/correct/path/to/jdk17`)
+- `JAVA_HOME` must be configured to point to JDK 17
+  - [steps for windows](https://confluence.atlassian.com/doc/setting-the-java_home-variable-in-windows-8895.html)
+  - macos: `export JAVA_HOME=$(/usr/libexec/java_home -v 17)` to see available values use `/usr/libexec/java_home -V`
+  - linux: `sudo update-alternatives --config java` or explicitly via `export JAVA_HOME=/replace/with/correct/path/to/jdk17`)
 
 Once the requirements are satisfied:
 
