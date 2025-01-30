@@ -43,6 +43,10 @@ cd Ananda-Marga-Fasting-Calendar-Android
 > - `KEY_PASSWORD` — the key password
 > - `KEY_ALIAS` — the key alias
 
+See also:
+- [Android Studio: Sign your app](https://developer.android.com/studio/publish/app-signing)
+- [How to create a keystore](https://stackoverflow.com/a/15330139)
+
 #### Building Using Android Studio
 An easy way to build a release android APK is to use the Android Studio wizard: on the menu pick **`Build`** -> **`Generate Signed App Bundle / APK`** -> **`APK`** -> **Keystore path**: **Create new** and fill in passwords and alias > **Next** select **`release`** -> **`Create`**.
 
