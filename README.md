@@ -33,10 +33,6 @@ cd Ananda-Marga-Fasting-Calendar-Android
 
 2b. Build release APK (see also https://developer.android.com/build/build-for-release)
 
-#### Using Android Studio
-An easy way to build a release android APK is to use the Android Studio wizard: on the menu pick **`Build`** -> **`Generate Signed App Bundle / APK`** -> **`APK`** -> **Keystore path**: **Create new** and fill in passwords and alias > **Next** select **`release`** -> **`Create`**.
-
-#### Using the terminal
 ```bash
 ./gradlew assembleRelease
 ```
@@ -46,6 +42,10 @@ An easy way to build a release android APK is to use the Android Studio wizard: 
 > - `STORE_PASSWORD` — the keystore password
 > - `KEY_PASSWORD` — the key password
 > - `KEY_ALIAS` — the key alias
+
+#### Building Using Android Studio
+An easy way to build a release android APK is to use the Android Studio wizard: on the menu pick **`Build`** -> **`Generate Signed App Bundle / APK`** -> **`APK`** -> **Keystore path**: **Create new** and fill in passwords and alias > **Next** select **`release`** -> **`Create`**.
+
 
 ## Build using github actions
 1. Fork this repository by clicking the **Fork** button in the top right.
