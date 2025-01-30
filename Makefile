@@ -31,7 +31,7 @@ init:  ## Initialize submodules (run after cloning if not using --recurse-submod
 	git submodule init
 
 update:  ## Update all submodules to the latest commit from their respective remote branches
-	git submodule update --remote --merge
+	git submodule update --recursive --remote
 
 sync:  ## Sync submodule configuration with .gitmodules (useful after modifying submodule URLs)
 	git submodule sync
