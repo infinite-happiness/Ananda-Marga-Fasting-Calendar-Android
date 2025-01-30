@@ -15,8 +15,8 @@ base64 < keystore.jks > keystore.base64.txt
 3. **GitHub Secrets Setup:**
 Under current repo > Settings > Secrets and variables > Actions > Repository secrets set:
     - `KEYSTORE_BASE64`: Base64-encoded keystore
-    - `KEY_ALIAS`: Keystore alias
-    - `KEY_PASSWORD`: Key password
-    - `KEY_PASSWORD`: Keystore password
+    - `KEY_ALIAS`: Keystore alias, in step #1 the alias is set to `custom`
+    - `KEY_PASSWORD`: Key password, the password you specified when running step #1
+    - `STORE_PASSWORD`: Keystore password, the password you specified when running step #1
 
 ---
