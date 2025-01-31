@@ -72,7 +72,7 @@ See also:
 ## Build using github actions
 1. Fork this repository by clicking the **Fork** button in the top right.
 2. Click the **Actions** tab
-3. In the left-side panel locate and click the **Build APK**.
+3. In the left-side panel locate and click the **Build APK** link.
 4. Click the **Run Workflow** and then click **Run Workflow** in the dropdown.
 
 > :exclamation: NOTE: To generate release APK via the github workflow github secrets must configured as described in [Keystore Config
