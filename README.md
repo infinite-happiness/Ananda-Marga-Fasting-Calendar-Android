@@ -64,7 +64,7 @@ Once the variables are set and `KEYSTORE` points to a valid keystore file, issue
 ```
 
 See also:
-- [Android Studio: Sign your app](https://developer.android.com/studio/publish/app-signing)
+- [Android Studio: Sign your app](https://developer.android.com/studio/publish/app-signing#generate-key)
 - [How to create a keystore](https://stackoverflow.com/a/15330139)
 - [How to set environment variables](https://www3.ntu.edu.sg/home/ehchua/programming/howto/Environment_Variables.html)
 
