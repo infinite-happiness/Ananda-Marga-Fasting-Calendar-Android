@@ -31,30 +31,42 @@ git clone https://github.com/glowinthedark/Ananda-Marga-Fasting-Calendar-Android
 cd Ananda-Marga-Fasting-Calendar-Android
 ```
 
-2a. Build debug APK
+### Build a debug APK
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-2b. Build release APK (see also https://developer.android.com/build/build-for-release)
+### Build a release APK (:exclamation: please read https://developer.android.com/build/build-for-release)
+To build a relase APK a release keystore must be created and configured. A new keystore can be created using Android Studio as described below, or from terminal using a command such as the one below (the alias can be any text):
+
+```bash
+keytool -genkey -v -keystore keystore.jks -keyalg RSA -keysize 4096 -validity 10000 -alias REPLACE-WITH-YOUR-OWN-ALIAS -storetype JKS
+```
+
+#### Build with Android Studio
+An easy way to build a release android APK is to use the Android Studio wizard: on the menu pick **`Build`** -> **`Generate Signed App Bundle / APK`** -> **`APK`** -> **Keystore path**: **Create new** and fill in passwords and alias > **Next** select **`release`** -> **`Create`**.
+
+#### Build from terminal
+
+To build a release APK from the terminal the following environment variables must be defined:
+| var name | value |
+|----------|-------|
+`KEYSTORE` |path to the keystore file    
+`STORE_PASSWORD` |keystore password
+`KEY_PASSWORD` |key password
+`KEY_ALIAS` |key alias
+
+Once the variables are set and `KEYSTORE` points to a valid keystore file, issue the following command:
 
 ```bash
 ./gradlew assembleRelease
 ```
 
-> :exclamation: NOTE: In order to build the release version the following environment variables must be defined:
-> - `KEYSTORE` — path to the keystore file
-> - `STORE_PASSWORD` — the keystore password
-> - `KEY_PASSWORD` — the key password
-> - `KEY_ALIAS` — the key alias
-
 See also:
 - [Android Studio: Sign your app](https://developer.android.com/studio/publish/app-signing)
 - [How to create a keystore](https://stackoverflow.com/a/15330139)
 
-#### Building Using Android Studio
-An easy way to build a release android APK is to use the Android Studio wizard: on the menu pick **`Build`** -> **`Generate Signed App Bundle / APK`** -> **`APK`** -> **Keystore path**: **Create new** and fill in passwords and alias > **Next** select **`release`** -> **`Create`**.
 
 
 ## Build using github actions
