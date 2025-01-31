@@ -37,7 +37,7 @@ cd Ananda-Marga-Fasting-Calendar-Android
 ./gradlew assembleDebug
 ```
 
-### Build a release APK (:exclamation: please read https://developer.android.com/build/build-for-release)
+### Build a release APK ( ❗ please read https://developer.android.com/build/build-for-release)
 To build a relase APK a release keystore must be created and configured. A new keystore can be created using Android Studio as described below, or from terminal using a command such as the one below (the alias can be any text):
 
 ```bash
