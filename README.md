@@ -77,3 +77,6 @@ See also:
 
 > :exclamation: NOTE: To generate release APK via the github workflow github secrets must configured as described in [Keystore Config
 ](https://github.com/glowinthedark/Ananda-Marga-Fasting-Calendar-Android/blob/android/how.md)
+
+### Versioning for github action builds
+It is recommended to create a tag such as `v0.1` either from github web UI [**Releases**](../../releases) > [**Draft a new release**](../../releases/new) or using `git` from your local development environment before triggerring the release build — then the generated APK release name will contain the tag name.
