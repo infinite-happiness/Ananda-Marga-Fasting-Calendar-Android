@@ -6,6 +6,7 @@ name: Build APK
 env:
   JAVA_VERSION: 17
   APK_PATH_RELEASE: app/build/outputs/apk/release/ananda-marga-fasting-release.apk
+  AAB_PATH_RELEASE: app/build/outputs/bundle/release/ananda-marga-fasting-release.aab
   APK_PATH_DEBUG: app/build/outputs/apk/debug/ananda-marga-fasting-debug.apk
   
 on:
@@ -86,19 +87,25 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-        run: ./gradlew assembleRelease
+        run: ./gradlew bundleRelease assembleRelease
         
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.event.repository.name }}-release.apk
           path: ${{ env.APK_PATH_RELEASE }}
+
+      - name: Upload Release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-release.aab
+          path: ${{ env.AAB_PATH_RELEASE }}          
           
       - name: Create Release
         uses: softprops/action-gh-release@v2
 #        if: startsWith(github.ref, 'refs/heads/android/')
         with:
           tag_name: ${{ env.TAG }}
-          files: ${{ env.APK_PATH_RELEASE }}
+          files: ${{ env.APK_PATH_RELEASE }}, ${{ env.AAB_PATH_RELEASE }}
           generate_release_notes: false
           make_latest: true
