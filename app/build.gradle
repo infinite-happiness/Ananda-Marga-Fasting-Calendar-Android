@@ -10,8 +10,8 @@ android {
         applicationId "com.legbehindneck.fasting"
         minSdk 24
         targetSdk 34
-        versionCode 30
-        versionName "30"
+        versionCode 31
+        versionName "31"
         setProperty("archivesBaseName", "ananda-marga-fasting")
     }
 
