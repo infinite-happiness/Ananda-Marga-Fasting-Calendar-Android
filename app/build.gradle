@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace 'com.legbehindneck.fasting'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.legbehindneck.fasting"
